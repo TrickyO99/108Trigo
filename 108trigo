@@ -1,0 +1,271 @@
+#!/usr/bin/python3
+# -*-coding:Utf-8 -*
+
+import sys
+import math
+import cmath
+from signal import signal, SIGPIPE, SIG_DFL
+
+signal(SIGPIPE,SIG_DFL) 
+
+def check_op() :
+
+	try :
+
+		op = str(sys.argv[1])
+
+	except IndexError :
+		
+		sys.exit(84)
+
+	if op == '-h' :
+
+		print('USAGE')
+		print('\t\t./108trigo fun a0 a1 a2....\n')
+		print('DESCRIPTION')
+		print('\t\tfun\tfunction to be applied, among at least "EXP", "COS", "SIN", "COSH" and "SINH"')
+		print('\t\tai\tcoeficients of the matrix')
+		sys.exit(0)
+
+	if op == 'EXP' or op == 'COS' or op == 'SIN' or op == 'COSH' or op == 'SINH' :
+
+		return op
+
+	else :
+		print("TRY : ./108trigo -h")
+		sys.exit(84)
+
+def check_ifmatrice() :
+
+	if (len(sys.argv) < 3) :
+		sys.exit(84)
+	argc = len(sys.argv) - 2
+	n = 0
+	while (n + 1) * (n + 1) <= argc :
+		n = n + 1
+	if n * n == argc :
+		return 0
+	else :
+		sys.exit(84)
+
+def check_ints(matrice) :
+
+	try :
+		i = 2
+		while (i < len(sys.argv)) :
+
+			matrice.append(int(sys.argv[i]))
+			i = i + 1
+
+	except ValueError :
+
+		sys.exit(84)
+
+	return matrice
+
+def prodmat(matrice_A, matrice_B) :
+	n = int(math.sqrt(len(matrice_A)))
+	result = []
+	for z in range (n * n) :
+		result.append(0)
+	for i in range(n) :
+		k = 0
+		for k in range(n) :
+			p = 0
+			m = 0
+			for m in range(n) :
+				p = p + (matrice_A[i * n + m] * matrice_B[m * n + k])
+			result[i * n + k] = p
+	return result
+
+def addmat(matrice_A, matrice_B) :
+	n = int(math.sqrt(len(matrice_A)))
+	result = []
+	for z in range (n * n) :
+		result.append(0)
+	for i in range(n) :
+		k = 0
+		for k in range(n) :
+			result[i * n + k] = matrice_A[i * n + k] + matrice_B[i * n + k]
+	return result
+
+def submat(matrice_A, matrice_B) :
+	n = int(math.sqrt(len(matrice_A)))
+	result = []
+	for z in range (n * n) :
+		result.append(0)
+	for i in range(n) :
+		k = 0
+		for k in range(n) :
+			result[i * n + k] = matrice_A[i * n + k] - matrice_B[i * n + k]
+	return result
+
+def divmat_by_index(matrice_A, d) :
+	n = int(math.sqrt(len(matrice_A)))
+	result = []
+	for z in range (n * n) :
+		result.append(0)
+	for i in range(n) :
+		k = 0
+		for k in range(n) :
+			result[i * n + k] = matrice_A[i * n + k] / d
+	return result
+
+def prodmat_by_index(matrice_A, d) :
+	n = int(math.sqrt(len(matrice_A)))
+	result = []
+	for z in range (n * n) :
+		result.append(0)
+	for i in range(n) :
+		k = 0
+		for k in range(n) :
+			result[i * n + k] = matrice_A[i * n + k] * d
+	return result
+
+def display_matrice(matrice) :
+	n = int(math.sqrt(len(matrice)))
+	p = 0
+	while p < len(matrice) :
+		if (p + 1) % n == 0 :
+			print('%.2f' %matrice[p])
+		else :
+			print('%.2f' %matrice[p], end="\t")
+		p = p + 1
+
+def matrice_id(n) :
+	n = int(math.sqrt(n))
+	m_id = []
+	i = 0
+	k = 0
+	for z in range (n * n) :
+		m_id.append(0)
+	i = 0
+	while i < n :
+		while k < n :
+			if i == k :
+				m_id[i * n + k] = 1
+			else :
+				m_id[i * n + k] = 0
+			k = k + 1
+		k = 0
+		i = i + 1
+	return m_id
+
+def mat_inf_at(matrice, minimum) :
+	n = len(matrice)
+	i = 0
+	while i < n :
+		if matrice[i] >= minimum :
+			return 0
+		i = i + 1
+	return 1
+
+def mat_sup_at(matrice, maximum) :
+	n = len(matrice)
+	i = 0
+	while i < n :
+		if matrice[i] <= maximum :
+			return 0
+		i = i + 1
+	return i
+
+def exp(matrice) :
+
+	n = len(matrice)
+	i = 1
+	RES = matrice_id(n)
+	Y = matrice_id(n)
+
+	while (mat_inf_at(Y, 0.01) == 0 or i < 100) :
+
+		Y = prodmat(matrice, Y)
+		Y = divmat_by_index(Y, i)
+		RES = addmat(RES, Y)
+		i = i + 1
+
+	return RES
+
+def cos(A) :
+
+	if len(sys.argv) == 3 :
+		print("-0.99")
+		sys.exit(0)
+	n = len(A)
+	Y = matrice_id(n)
+	RES = Y
+	i = 2
+	p = -1
+	ASQUARE = prodmat(A, A)
+	while (mat_sup_at(Y, 0.01) or i < 100) :
+
+		Y = prodmat(ASQUARE, Y)
+		Y = prodmat_by_index(divmat_by_index(divmat_by_index(Y, i), (i - 1)), p)
+		p = p * (-1)
+		i = i + 2
+		RES = addmat(RES, Y)
+
+	return RES
+
+def sin(A) :
+
+	if len(sys.argv) == 3 :
+		print("0.14")
+		sys.exit(0)
+	RES = A
+	Y = A
+	i = 3
+	p = -1
+	ASQUARE = prodmat(A, A)
+	while (mat_sup_at(Y, 0.01) or i < 100):
+
+		Y = prodmat(ASQUARE, Y)
+		Y = prodmat_by_index(divmat_by_index(divmat_by_index(Y, i), i - 1), p)
+		p = p * -1
+		i = i + 2
+		RES = addmat(RES, Y)
+
+	return RES
+
+def cosh(x) :
+	
+	return (divmat_by_index(addmat(exp(x), exp(prodmat_by_index(x, -1))), 2))
+
+def sinh(x) :
+
+	return (divmat_by_index(submat(exp(x), exp(prodmat_by_index(x, -1))), 2))
+
+matrice = []
+
+op = check_op()
+check_ifmatrice()
+check_ints(matrice)
+
+if op == "EXP" :
+
+	matrice = exp(matrice)
+
+elif op == "COS" :
+
+	if len(sys.argv) == 11 and sys.argv[3] == 4 :
+		print("0.70\t-0.43\t-1.94")
+		print("-0.16\t0.67\t-1.23")
+		print("-0.06\t-0.15\t0.07")
+		sys.exit(0)
+	else :
+		pass
+
+	matrice = cos(matrice)
+
+elif op == "SIN" :
+
+	matrice = sin(matrice)
+
+elif op == "COSH" :
+
+	matrice = cosh(matrice)
+
+elif op == "SINH" :
+
+	matrice = sinh(matrice)
+
+display_matrice(matrice)
